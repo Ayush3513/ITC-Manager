@@ -10,8 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { checkITCEligibility } from "@/service/ITCeligibilty";
 import { reconcileInvoice } from "@/service/reconcile";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+
 
 
 
@@ -253,6 +252,7 @@ export default function InvoiceUpload() {
       if (userError) throw userError;
   if (!user) throw new Error('No authenticated user found');
 
+
       const { data: savedInvoice, error: insertError } = await supabase
         .from("invoices")
         .insert([
@@ -332,9 +332,64 @@ const { error: claimError } = await supabase
     if (claimError) throw claimError;
 
 
+// First get GSTR-2B match
+const { data: gstr2bMatch, error: gstr2bError } = await supabase
+  .from('gstr_2b')
+  .select('*')
+  .eq('invoice_number', data.invoiceNumber)
+  .eq('supplier_gstin', data.supplierGstin)
+  .maybeSingle();
+
+if (gstr2bError) throw gstr2bError;
+
+// Get supplier
+const { data: supplier, error: supplierError } = await supabase
+  .from('suppliers')
+  .select('id')
+  .eq('gstin', data.supplierGstin)
+  .maybeSingle();
+
+if (supplierError) throw supplierError;
+if (!supplier) throw new Error('Supplier not found');
+
+// Create compliance check
+const complianceCheck = {
+  id: crypto.randomUUID(),
+  supplier_id: supplier.id,
+  check_type: 'GSTR2B_MATCH',
+  status: gstr2bMatch ? 'PASS' : 'FAIL',
+  details: {
+    invoice_number: data.invoiceNumber,
+    check_date: new Date().toISOString(),
+    found_in_gstr2b: !!gstr2bMatch,
+    invoice_match: {
+      total_amount: gstr2bMatch ? 
+        Number(gstr2bMatch.total_amount) === Number(data.taxAmount.totalAmount) : false,
+      tax_amounts: {
+        cgst: gstr2bMatch ? Number(gstr2bMatch.cgst) === Number(data.taxAmount.cgst) : false,
+        sgst: gstr2bMatch ? Number(gstr2bMatch.sgst) === Number(data.taxAmount.sgst) : false,
+        igst: gstr2bMatch ? Number(gstr2bMatch.igst) === Number(data.taxAmount.igst) : false
+      }
+    },
+    supplier_details: {
+      gstin: data.supplierGstin,
+      invoice_date: data.invoiceDate
+    }
+  },
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString()
+};
+
+// Insert compliance check
+const { error: complianceError } = await supabase
+  .from('compliance_checks')
+  .insert([complianceCheck]);
+
+if (complianceError) throw complianceError;
+
       // Step 5: Show final results
       toast({
-        title: "Process completed",
+        title: "Process completed ",
         description:
           `Status: ${eligibilityResult.verificationStatus}\n` +
           `Reconciliation: ${reconciliationStatus}\n` +
