@@ -252,7 +252,6 @@ export default function InvoiceUpload() {
       if (userError) throw userError;
   if (!user) throw new Error('No authenticated user found');
 
-
       const { data: savedInvoice, error: insertError } = await supabase
         .from("invoices")
         .insert([

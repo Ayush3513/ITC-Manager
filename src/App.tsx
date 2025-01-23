@@ -10,9 +10,9 @@ import Auth from "./pages/Auth";
 import ITCEligibility from "./pages/ITCEligibility";
 import Reconciliation from "./pages/Reconciliation";
 import Analytics from "./pages/Analytics";
-import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import InvoiceUpload from "./pages/InvoiceUpload";
+import CreditOptimise from "./pages/CreditOptimise";
 
 const queryClient = new QueryClient();
 
@@ -83,10 +83,10 @@ const App = () => (
             }
           />
           <Route
-            path="/notifications"
+            path="/credit"
             element={
               <ProtectedRoute>
-                <Notifications />
+                <CreditOptimise />
               </ProtectedRoute>
             }
           />

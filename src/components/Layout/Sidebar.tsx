@@ -22,7 +22,7 @@ const Sidebar = ({ isMobile = false }: SidebarProps) => {
     { icon: Upload, label: "Invoice Upload", path: "/invoice-upload" },
     { icon: CreditCard, label: "ITC Eligibility", path: "/itc-eligibility" },
     { icon: FileCheck, label: "Reconciliation", path: "/reconciliation" },
-    { icon: Bell, label: "Notifications", path: "/notifications" },
+    { icon: Bell, label: "Credit Optimisation", path: "/credit" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
