@@ -271,6 +271,48 @@ export default function InvoiceUpload() {
       if (insertError) throw insertError;
       if (!savedInvoice) throw new Error("Failed to save invoice");
 
+
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError) throw userError;
+if (!user) throw new Error('No authenticated user found');
+const { error: claimError } = await supabase
+.from("itc_claims")
+.insert([
+  {
+    id: crypto.randomUUID(),
+    user_id: user.id, // Use the user.id from the auth response
+    invoice_number: data.invoiceNumber,
+    supplier_gstin: data.supplierGstin.toUpperCase(),
+          amount: Number(data.taxAmount.totalAmount),
+          eligible_amount: 0, // Will be updated after verification
+          status: "PENDING",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ]);
+
+    if (claimError) throw claimError;
+
+    const { error: creditError } = await supabase
+  .from("credit_utilization")
+  .insert([
+    {
+      id: crypto.randomUUID(),
+      user_id: user.id, // Use the same user.id here
+          cgst: Number(data.taxAmount.cgst) || 0,
+          sgst: Number(data.taxAmount.sgst) || 0,
+          igst: Number(data.taxAmount.igst) || 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ]);
+
+    if (creditError) throw creditError;
+
+
+    
+
       toast({
         title: "Invoice saved successfully",
         description: "Now checking eligibility and reconciliation...",
@@ -296,6 +338,7 @@ export default function InvoiceUpload() {
         variant: eligibilityResult.isEligible ? "default" : "destructive",
       });
       queryClient.invalidateQueries(["invoices"]);
+
     } catch (error) {
       console.error("Error:", error);
       toast({
