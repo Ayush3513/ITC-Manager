@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { checkITCEligibility } from "@/service/ITCeligibilty";
 import { reconcileInvoice } from "@/service/reconcile";
 import { useForm } from "react-hook-form";
+import {v4 as uuidv4} from 'uuid';
 
 
 
@@ -256,7 +257,7 @@ export default function InvoiceUpload() {
         .from("invoices")
         .insert([
           {
-            id: crypto.randomUUID(),
+            id: uuidv4(),
             invoice_number: data.invoiceNumber,
             invoice_date: data.invoiceDate,
             buyer_gstin: data.buyerGstin.toUpperCase(),
@@ -281,7 +282,7 @@ export default function InvoiceUpload() {
   .from("credit_utilization")
   .insert([
     {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       user_id: user.id, // Use the same user.id here
           cgst: Number(data.taxAmount.cgst) || 0,
           sgst: Number(data.taxAmount.sgst) || 0,
@@ -316,7 +317,7 @@ const { error: claimError } = await supabase
 .from("itc_claims")
 .insert([
   {
-    id: crypto.randomUUID(),
+    id: uuidv4(),
     user_id: user.id, // Use the user.id from the auth response
     invoice_number: data.invoiceNumber,
     supplier_gstin: data.supplierGstin.toUpperCase(),
@@ -353,7 +354,7 @@ if (!supplier) throw new Error('Supplier not found');
 
 // Create compliance check
 const complianceCheck = {
-  id: crypto.randomUUID(),
+  id: uuidv4(),
   supplier_id: supplier.id,
   check_type: 'GSTR2B_MATCH',
   status: gstr2bMatch ? 'PASS' : 'FAIL',
