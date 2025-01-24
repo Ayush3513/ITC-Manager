@@ -1,1 +1,1 @@
-ITC Manager
+ITC Manager app
